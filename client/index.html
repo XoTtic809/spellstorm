@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SpellStorm — Competitive Spelling</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════ HOME SCREEN -->
+  <div id="screen-home" class="screen active">
+    <div class="bg-particles" id="particles"></div>
+
+    <div class="home-container">
+      <div class="logo-section">
+        <div class="logo-icon">⚡</div>
+        <h1 class="logo-text">SpellStorm</h1>
+        <p class="logo-tagline">Compete. Spell. Conquer.</p>
+      </div>
+
+      <div class="home-buttons">
+        <button class="btn btn-primary btn-glow" id="btn-play-ranked">
+          <span class="btn-icon">🏆</span>
+          Play Ranked
+        </button>
+        <button class="btn btn-secondary" id="btn-play-casual">
+          <span class="btn-icon">🎮</span>
+          Casual Mode
+        </button>
+        <button class="btn btn-ghost" id="btn-leaderboard">
+          <span class="btn-icon">📊</span>
+          Leaderboard
+        </button>
+        <button class="btn btn-ghost" id="btn-profile-nav">
+          <span class="btn-icon">👤</span>
+          Profile
+        </button>
+      </div>
+
+      <div class="home-auth" id="home-auth">
+        <button class="btn btn-outline" id="btn-login">Login</button>
+        <button class="btn btn-outline-accent" id="btn-register">Register</button>
+      </div>
+
+      <div class="home-user-info hidden" id="home-user-info">
+        <div class="user-badge">
+          <span class="user-rank-icon" id="home-rank-icon"></span>
+          <span class="user-name" id="home-username"></span>
+          <span class="user-rating" id="home-rating"></span>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="btn-logout">Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ AUTH SCREEN -->
+  <div id="screen-auth" class="screen">
+    <div class="auth-container glass">
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Login</button>
+        <button class="auth-tab" data-tab="register">Register</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="form-login" class="auth-form">
+        <div class="form-header">
+          <h2>Welcome Back</h2>
+          <p>Login to your SpellStorm account</p>
+        </div>
+        <div class="form-group">
+          <label for="login-username">Username</label>
+          <input type="text" id="login-username" placeholder="Enter username" autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" placeholder="Enter password" autocomplete="current-password" />
+        </div>
+        <div class="form-error hidden" id="login-error"></div>
+        <button type="submit" class="btn btn-primary btn-full">
+          <span class="btn-text">Login</span>
+          <span class="btn-loader hidden"></span>
+        </button>
+        <p class="form-footer">Don't have an account? <a href="#" class="switch-to-register">Register</a></p>
+      </form>
+
+      <!-- Register Form -->
+      <form id="form-register" class="auth-form hidden">
+        <div class="form-header">
+          <h2>Join SpellStorm</h2>
+          <p>Create your competitive account</p>
+        </div>
+        <div class="form-group">
+          <label for="reg-username">Username</label>
+          <input type="text" id="reg-username" placeholder="3–20 chars, letters/numbers/_" autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label for="reg-password">Password</label>
+          <input type="password" id="reg-password" placeholder="Minimum 8 characters" autocomplete="new-password" />
+        </div>
+        <div class="form-group">
+          <label for="reg-confirm">Confirm Password</label>
+          <input type="password" id="reg-confirm" placeholder="Repeat password" autocomplete="new-password" />
+        </div>
+        <div class="form-error hidden" id="register-error"></div>
+        <button type="submit" class="btn btn-primary btn-full">
+          <span class="btn-text">Create Account</span>
+          <span class="btn-loader hidden"></span>
+        </button>
+        <p class="form-footer">Already have an account? <a href="#" class="switch-to-login">Login</a></p>
+      </form>
+
+      <button class="btn btn-ghost btn-sm back-btn" id="auth-back">← Back</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ QUEUE SCREEN -->
+  <div id="screen-queue" class="screen">
+    <div class="queue-container">
+      <div class="queue-card glass">
+        <div class="queue-header">
+          <div class="queue-mode-badge" id="queue-mode-badge">Ranked</div>
+          <h2>Finding Opponent…</h2>
+        </div>
+
+        <div class="queue-animation">
+          <div class="radar-ring"></div>
+          <div class="radar-ring delay-1"></div>
+          <div class="radar-ring delay-2"></div>
+          <div class="radar-center">⚡</div>
+        </div>
+
+        <div class="queue-info">
+          <div class="queue-stat">
+            <span class="queue-stat-label">Your Rating</span>
+            <span class="queue-stat-value" id="queue-rating">—</span>
+          </div>
+          <div class="queue-stat">
+            <span class="queue-stat-label">Queue Size</span>
+            <span class="queue-stat-value" id="queue-size">—</span>
+          </div>
+          <div class="queue-stat">
+            <span class="queue-stat-label">Wait Time</span>
+            <span class="queue-stat-value" id="queue-wait">0s</span>
+          </div>
+        </div>
+
+        <button class="btn btn-outline" id="btn-queue-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════════════════════════════════════════ GAME SCREEN -->
+  <div id="screen-game" class="screen">
+
+    <!-- Anti-cheat warning overlay -->
+    <div id="anticheat-overlay" class="anticheat-overlay hidden">
+      <div class="anticheat-popup glass">
+        <div class="anticheat-icon">⚠️</div>
+        <h3>Tab Switch Detected</h3>
+        <p id="anticheat-msg">Do not leave this tab during a match!</p>
+        <div class="warning-pips" id="warning-pips">
+          <div class="pip active"></div>
+          <div class="pip"></div>
+          <div class="pip"></div>
+        </div>
+        <button class="btn btn-primary" id="anticheat-dismiss">I Understand</button>
+      </div>
+    </div>
+
+    <!-- Match found overlay -->
+    <div id="match-found-overlay" class="match-found-overlay">
+      <div class="match-found-content">
+        <div class="match-found-title">MATCH FOUND</div>
+        <div class="match-found-vs">
+          <div class="match-found-player" id="mf-player1">—</div>
+          <div class="match-found-divider">VS</div>
+          <div class="match-found-player" id="mf-player2">—</div>
+        </div>
+        <div class="match-found-countdown" id="mf-countdown">3</div>
+      </div>
+    </div>
+
+    <div class="game-layout">
+
+      <!-- Top bar: players + scores -->
+      <div class="game-topbar glass">
+        <div class="player-info player-left">
+          <span class="player-name" id="game-p1-name">Player 1</span>
+          <span class="player-rank-badge" id="game-p1-rank"></span>
+          <div class="warning-indicator" id="game-p1-warnings">
+            <span class="warning-dot"></span>
+            <span class="warning-dot"></span>
+            <span class="warning-dot"></span>
+          </div>
+        </div>
+
+        <div class="score-board">
+          <div class="score-display">
+            <span class="score-value" id="game-score-p1">0</span>
+            <span class="score-sep">—</span>
+            <span class="score-value" id="game-score-p2">0</span>
+          </div>
+          <div class="round-info">Round <span id="game-round">1</span> of <span id="game-total-rounds">7</span></div>
+          <div class="game-mode-tag" id="game-mode-tag">Ranked</div>
+        </div>
+
+        <div class="player-info player-right">
+          <div class="warning-indicator" id="game-p2-warnings">
+            <span class="warning-dot"></span>
+            <span class="warning-dot"></span>
+            <span class="warning-dot"></span>
+          </div>
+          <span class="player-rank-badge" id="game-p2-rank"></span>
+          <span class="player-name" id="game-p2-name">Player 2</span>
+        </div>
+      </div>
+
+      <!-- Main game area -->
+      <div class="game-center">
+
+        <!-- Timer ring -->
+        <div class="timer-container">
+          <svg class="timer-ring" viewBox="0 0 120 120">
+            <circle class="timer-ring-bg" cx="60" cy="60" r="52" />
+            <circle class="timer-ring-fill" cx="60" cy="60" r="52" id="timer-arc" />
+          </svg>
+          <div class="timer-value" id="game-timer">6</div>
+        </div>
+
+        <!-- Word display -->
+        <div class="word-display-area">
+          <div class="difficulty-label" id="word-difficulty">MEDIUM</div>
+          <div class="word-display" id="game-word">
+            <span class="word-letter" style="animation-delay:0.0s">?</span>
+          </div>
+        </div>
+
+        <!-- Answer input -->
+        <div class="answer-area">
+          <div class="answer-input-wrap" id="answer-input-wrap">
+            <input
+              type="text"
+              id="answer-input"
+              class="answer-input"
+              placeholder="Type the word…"
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
+              maxlength="50"
+            />
+            <button class="submit-btn" id="btn-submit-answer">→</button>
+          </div>
+          <div class="answer-feedback" id="answer-feedback"></div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════ RESULTS SCREEN -->
+  <div id="screen-results" class="screen">
+    <div class="results-container">
+      <div class="results-card glass">
+
+        <!-- Victory / Defeat header -->
+        <div class="results-header" id="results-header">
+          <div class="results-icon" id="results-icon">🏆</div>
+          <h2 class="results-title" id="results-title">Victory!</h2>
+          <p class="results-subtitle" id="results-subtitle">Well played</p>
+        </div>
+
+        <!-- Score breakdown -->
+        <div class="results-score">
+          <div class="results-player">
+            <div class="rp-name" id="res-self-name">You</div>
+            <div class="rp-score" id="res-self-score">0</div>
+          </div>
+          <div class="results-vs">VS</div>
+          <div class="results-player">
+            <div class="rp-name" id="res-opp-name">Opponent</div>
+            <div class="rp-score" id="res-opp-score">0</div>
+          </div>
+        </div>
+
+        <!-- Rating change (ranked only) -->
+        <div class="results-rating" id="results-rating-section">
+          <div class="rating-change" id="res-rating-change">+0</div>
+          <div class="rating-new">New rating: <strong id="res-new-rating">1000</strong></div>
+          <div class="rank-progress-container">
+            <div class="rank-label">
+              <span id="res-rank-name">Silver</span>
+              <span id="res-rank-next">Gold</span>
+            </div>
+            <div class="rank-progress-bar">
+              <div class="rank-progress-fill" id="res-rank-progress"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="results-actions">
+          <button class="btn btn-primary btn-glow" id="btn-play-again">Play Again</button>
+          <button class="btn btn-ghost" id="btn-results-home">Home</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════ LEADERBOARD SCREEN -->
+  <div id="screen-leaderboard" class="screen">
+    <div class="leaderboard-container">
+      <div class="leaderboard-header">
+        <button class="btn btn-ghost btn-sm" id="lb-back">← Back</button>
+        <h2>Leaderboard</h2>
+        <div class="lb-subtitle">Top 100 Players</div>
+      </div>
+
+      <div class="leaderboard-table-wrap glass">
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Player</th>
+              <th>Rank</th>
+              <th>Rating</th>
+              <th>W/L</th>
+              <th>Win %</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-body">
+            <tr><td colspan="6" class="lb-loading">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ PROFILE SCREEN -->
+  <div id="screen-profile" class="screen">
+    <div class="profile-container">
+      <div class="profile-header">
+        <button class="btn btn-ghost btn-sm" id="profile-back">← Back</button>
+      </div>
+
+      <div class="profile-card glass" id="profile-card">
+        <div class="profile-avatar" id="profile-avatar">?</div>
+        <h2 class="profile-username" id="profile-username">—</h2>
+        <div class="profile-rank-badge" id="profile-rank-badge">—</div>
+        <div class="profile-rating" id="profile-rating">—</div>
+
+        <div class="profile-stats">
+          <div class="stat-box">
+            <div class="stat-value" id="prof-wins">0</div>
+            <div class="stat-label">Wins</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="prof-losses">0</div>
+            <div class="stat-label">Losses</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="prof-winratio">0%</div>
+            <div class="stat-label">Win Rate</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="prof-streak">0</div>
+            <div class="stat-label">Best Streak</div>
+          </div>
+        </div>
+
+        <div class="profile-matches-title">Recent Matches</div>
+        <div class="profile-matches" id="profile-matches">
+          <div class="match-loading">Loading matches…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notifications -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/anticheat.js"></script>
+  <script src="/js/game.js"></script>
+  <script src="/js/main.js"></script>
+</body>
+</html>

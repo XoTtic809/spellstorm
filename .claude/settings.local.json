@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --check server/index.js)",
+      "Bash(node --check server/game.js)",
+      "Bash(node --check server/matchmaking.js)",
+      "Bash(node --check utils/words.js)",
+      "Bash(node --check server/auth.js)",
+      "Bash(node --check server/anticheat.js)",
+      "Bash(node --check server/routes/auth.js)",
+      "Bash(node --check server/routes/leaderboard.js)",
+      "Bash(node --check server/routes/profile.js)",
+      "Bash(node --check database/db.js)",
+      "Bash(node --check database/migrate.js)",
+      "WebFetch(domain:docs.railway.com)"
+    ]
+  }
+}
