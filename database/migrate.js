@@ -28,6 +28,8 @@ async function migrate() {
 }
 
 migrate().catch(err => {
-  console.error('[Migrate] FAILED:', err.message);
+  console.error('[Migrate] FAILED:', err.message || err);
+  if (err.code) console.error('[Migrate] Error code:', err.code);
+  if (!process.env.DATABASE_URL) console.error('[Migrate] DATABASE_URL is not set!');
   process.exit(1);
 });
