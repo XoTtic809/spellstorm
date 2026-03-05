@@ -1,35 +1,64 @@
 /**
- * Anti-cheat module for SpellStorm.
+ * SpellStorm — Advanced Anti-Cheat Module
  *
- * Tracks tab-switch warnings per active match session.
- * Rules:
- *   1st switch → warning popup sent to player
- *   2nd switch → auto-lose current round
- *   3rd switch → auto-forfeit entire match
+ * Tab-switch rules:
+ *   1st switch          → warning popup
+ *   2nd switch          → auto-lose current round
+ *   3rd switch          → auto-forfeit match
+ *   2 switches < 3s     → treated as 2nd immediately (rapid exploit block)
+ *
+ * All events are logged with timestamps and persisted to the DB.
  */
 
 const { query } = require('../database/db');
+const logger    = require('../utils/logger');
 
 const WARNING_THRESHOLDS = {
-  WARN:    1,
+  WARN:       1,
   LOSE_ROUND: 2,
-  FORFEIT: 3,
+  FORFEIT:    3,
 };
 
+const RAPID_SWITCH_WINDOW_MS = 3000; // two switches within this → instant round loss
+
 /**
- * Process a tab-switch event for a player in a game session.
+ * Process a tab-switch event for a player.
  *
- * @param {object} gameSession - Active game session object (mutated)
- * @param {string} socketId    - Socket ID of the offending player
- * @param {object} io          - Socket.io server instance
- * @returns {{ action: 'warn' | 'lose_round' | 'forfeit', warnings: number }}
+ * @param {object} gameSession
+ * @param {string} socketId
+ * @param {object} io
+ * @returns {{ action: 'warn'|'lose_round'|'forfeit', warnings: number }}
  */
 function processTabSwitch(gameSession, socketId, io) {
   const playerKey = gameSession.player1.socketId === socketId ? 'player1' : 'player2';
   const player    = gameSession[playerKey];
+  const now       = Date.now();
 
-  player.warnings = (player.warnings || 0) + 1;
-  const warnings  = player.warnings;
+  // Rapid-switch detection: two events within RAPID_SWITCH_WINDOW_MS
+  const timeSinceLast = player.lastTabSwitch ? now - player.lastTabSwitch : Infinity;
+  player.lastTabSwitch = now;
+
+  if (timeSinceLast < RAPID_SWITCH_WINDOW_MS && player.warnings < WARNING_THRESHOLDS.FORFEIT) {
+    // Force to at least the lose_round threshold immediately
+    player.warnings = Math.max(player.warnings + 1, WARNING_THRESHOLDS.LOSE_ROUND);
+    logger.ac('rapid_tab_switch', {
+      user:    player.username,
+      room:    gameSession.roomId,
+      gapMs:   timeSinceLast,
+      warnings: player.warnings,
+    });
+  } else {
+    player.warnings = Math.min((player.warnings || 0) + 1, WARNING_THRESHOLDS.FORFEIT);
+  }
+
+  const warnings = player.warnings;
+
+  logger.ac('tab_switch', {
+    user:     player.username,
+    room:     gameSession.roomId,
+    warnings,
+    rapid:    timeSinceLast < RAPID_SWITCH_WINDOW_MS,
+  });
 
   let action;
 
@@ -37,21 +66,21 @@ function processTabSwitch(gameSession, socketId, io) {
     action = 'forfeit';
     io.to(gameSession.roomId).emit('anticheat:forfeit', {
       username: player.username,
-      reason:   'Tab switched 3 times — auto forfeit',
+      reason:   'Tab switched 3 times — match forfeited',
     });
   } else if (warnings >= WARNING_THRESHOLDS.LOSE_ROUND) {
     action = 'lose_round';
     io.to(gameSession.roomId).emit('anticheat:lose_round', {
       username: player.username,
       warnings,
+      maxWarnings: WARNING_THRESHOLDS.FORFEIT,
     });
   } else {
     action = 'warn';
-    // Only the offending player sees the popup
     io.to(socketId).emit('anticheat:warning', {
       warnings,
       maxWarnings: WARNING_THRESHOLDS.FORFEIT,
-      message: 'Warning: switching tabs is not allowed! Next time you will lose the round.',
+      message: 'Warning 1/3: Do not switch tabs during a match! Next offense = round loss.',
     });
   }
 
@@ -59,12 +88,7 @@ function processTabSwitch(gameSession, socketId, io) {
 }
 
 /**
- * Persist a warning to the database (called after match is created/found).
- * Fire-and-forget; errors are logged but not thrown.
- *
- * @param {number} matchId
- * @param {number} userId
- * @param {string} reason
+ * Persist a warning to the DB (fire-and-forget).
  */
 async function logWarning(matchId, userId, reason) {
   try {
@@ -73,7 +97,7 @@ async function logWarning(matchId, userId, reason) {
       [matchId, userId, reason]
     );
   } catch (err) {
-    console.error('[AntiCheat] Failed to log warning:', err.message);
+    logger.error('anticheat', 'Failed to persist warning', { err: err.message });
   }
 }
 

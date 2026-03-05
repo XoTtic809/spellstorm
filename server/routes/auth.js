@@ -6,8 +6,15 @@ const rateLimit   = require('express-rate-limit');
 const { query }   = require('../../database/db');
 const { hashPassword, verifyPassword, signToken, requireAuth } = require('../auth');
 const { getRank } = require('../../utils/ranks');
+const logger      = require('../../utils/logger');
 
 const router = express.Router();
+
+// Sanitize string input: strip HTML, trim, limit length
+function sanitize(str, maxLen = 100) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/[<>"'`]/g, '').trim().slice(0, maxLen);
+}
 
 // Rate-limit login attempts: max 10 per 15 minutes per IP
 const loginLimiter = rateLimit({
@@ -16,6 +23,15 @@ const loginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many login attempts. Try again in 15 minutes.' },
+});
+
+// Rate-limit register: max 5 per hour per IP
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many accounts created. Try again in an hour.' },
 });
 
 // Validate username: 3–20 alphanumeric/underscore chars
@@ -31,9 +47,10 @@ function isValidPassword(password) {
 /**
  * POST /api/auth/register
  */
-router.post('/register', async (req, res) => {
+router.post('/register', registerLimiter, async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const username = sanitize(req.body?.username, 20);
+    const password = typeof req.body?.password === 'string' ? req.body.password : '';
 
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password are required.' });
@@ -83,7 +100,8 @@ router.post('/register', async (req, res) => {
  */
 router.post('/login', loginLimiter, async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const username = sanitize(req.body?.username, 20);
+    const password = typeof req.body?.password === 'string' ? req.body.password : '';
 
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password are required.' });

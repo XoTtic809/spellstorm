@@ -9,15 +9,16 @@ const Game = (() => {
 
   // ── State ─────────────────────────────────────────────────────────────────
 
-  let socket         = null;
-  let currentRoomId  = null;
-  let currentMode    = null;
-  let localTimer     = null;   // Visual timer (server is authoritative)
-  let roundMs        = 6000;
-  let roundStartTime = null;
-  let selfUsername   = null;
+  let socket           = null;
+  let currentRoomId    = null;
+  let currentMode      = null;
+  let currentRoundId   = null;  // must be echoed back with each submission
+  let localTimer       = null;
+  let roundMs          = 6000;
+  let roundStartTime   = null;
+  let selfUsername     = null;
   let opponentUsername = null;
-  let hasSubmitted   = false;
+  let hasSubmitted     = false;
 
   const TIMER_CIRCUMFERENCE = 326.7; // 2π × 52
 
@@ -157,6 +158,58 @@ const Game = (() => {
       AntiCheat.showWarning(3, reason);
     });
 
+    // ── Reconnect / Disconnect events ─────────────────────────────────────
+
+    socket.on('match:resume', (data) => {
+      currentRoomId    = data.roomId;
+      currentRoundId   = data.roundId;
+      currentMode      = data.mode;
+      selfUsername     = data.self.username;
+      opponentUsername = data.opponent.username;
+      hasSubmitted     = false;
+
+      setupGameScreen({
+        self:     data.self,
+        opponent: data.opponent,
+        mode:     data.mode,
+      });
+      Main.showScreen('game');
+      AntiCheat.activate(currentRoomId, socket);
+      Main.showToast('Reconnected to match!', 'success');
+
+      // Resume visual timer with remaining time
+      if (data.word && data.timerRemainingMs > 0) {
+        displayWord(data.word);
+        els.wordDifficulty.textContent = (data.difficulty || 'medium').toUpperCase();
+        els.gameRound.textContent      = data.round;
+        updateScores(data.scores);
+        els.answerInput.value    = '';
+        els.answerInput.disabled = false;
+        els.answerInput.focus();
+        startVisualTimer(data.timerRemainingMs);
+      }
+    });
+
+    socket.on('opponent:disconnected', ({ username, reconnectTimeMs }) => {
+      Main.showToast(`${username} disconnected — waiting ${reconnectTimeMs / 1000}s…`, 'warning');
+    });
+
+    socket.on('opponent:reconnected', ({ username }) => {
+      Main.showToast(`${username} reconnected!`, 'success');
+    });
+
+    socket.on('idle:warning', ({ idleRounds, forfeitAt }) => {
+      Main.showToast(`⚠ AFK warning! You'll be forfeited in ${forfeitAt - idleRounds} more missed rounds.`, 'warning');
+    });
+
+    socket.on('player:idle_forfeit', ({ username }) => {
+      if (username === selfUsername) {
+        Main.showToast('You were forfeited for inactivity.', 'error');
+      } else {
+        Main.showToast(`${username} forfeited for inactivity.`, 'info');
+      }
+    });
+
     return socket;
   }
 
@@ -272,7 +325,8 @@ const Game = (() => {
   // ── Round ─────────────────────────────────────────────────────────────────
 
   function onRoundStart(data) {
-    hasSubmitted = false;
+    hasSubmitted   = false;
+    currentRoundId = data.roundId;  // store server-issued round ID
     els.gameTotalRounds.textContent = data.totalRounds;
     els.gameRound.textContent       = data.round;
 
@@ -373,12 +427,13 @@ const Game = (() => {
   // ── Answer Submission ────────────────────────────────────────────────────
 
   function submitAnswer() {
-    if (hasSubmitted || !currentRoomId) return;
+    if (hasSubmitted || !currentRoomId || !currentRoundId) return;
     const answer = els.answerInput.value.trim();
     if (!answer) return;
 
     hasSubmitted = true;
-    socket.emit('game:submit', { roomId: currentRoomId, answer });
+    // Include roundId so server can validate it's for the current round
+    socket.emit('game:submit', { roomId: currentRoomId, answer, roundId: currentRoundId });
   }
 
   // ── Match End ─────────────────────────────────────────────────────────────

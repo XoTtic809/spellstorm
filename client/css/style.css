@@ -1464,6 +1464,229 @@ html, body {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   RECONNECT OVERLAY
+═══════════════════════════════════════════════════════════════════════════ */
+
+#reconnect-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9000;
+  animation: fadeIn 0.3s ease;
+}
+
+#reconnect-overlay.hidden { display: none; }
+
+.reconnect-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px 48px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.reconnect-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  margin: 0 auto 20px;
+  animation: spin 0.8s linear infinite;
+}
+
+.reconnect-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.reconnect-sub {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Opponent disconnect banner */
+.opponent-disconnect-banner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
+  border-bottom: 1px solid rgba(245, 158, 11, 0.4);
+  color: #f59e0b;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  padding: 8px 16px;
+  letter-spacing: 0.3px;
+  animation: slideDown 0.3s ease;
+}
+
+.opponent-disconnect-banner.hidden { display: none; }
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   IDLE WARNING
+═══════════════════════════════════════════════════════════════════════════ */
+
+.idle-warning-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #ef4444;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  z-index: 8500;
+  animation: toastIn 0.3s ease, toastOut 0.3s ease 3.7s forwards;
+  pointer-events: none;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; transform: translateX(-50%) translateY(0); }
+  to   { opacity: 0; transform: translateX(-50%) translateY(12px); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RANK BADGE TIERS (enhanced)
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* Bronze */
+.rank-badge[data-rank="Bronze"],
+.rank-pill[data-rank="Bronze"] {
+  background: linear-gradient(135deg, rgba(180, 103, 50, 0.2), rgba(180, 103, 50, 0.05));
+  border-color: rgba(180, 103, 50, 0.5);
+  color: #cd7f32;
+}
+
+/* Silver */
+.rank-badge[data-rank="Silver"],
+.rank-pill[data-rank="Silver"] {
+  background: linear-gradient(135deg, rgba(160, 160, 170, 0.2), rgba(160, 160, 170, 0.05));
+  border-color: rgba(160, 160, 170, 0.5);
+  color: #c0c0c8;
+}
+
+/* Gold */
+.rank-badge[data-rank="Gold"],
+.rank-pill[data-rank="Gold"] {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(234, 179, 8, 0.05));
+  border-color: rgba(234, 179, 8, 0.5);
+  color: #eab308;
+}
+
+/* Platinum */
+.rank-badge[data-rank="Platinum"],
+.rank-pill[data-rank="Platinum"] {
+  background: linear-gradient(135deg, rgba(148, 246, 224, 0.2), rgba(56, 189, 248, 0.05));
+  border-color: rgba(94, 234, 212, 0.5);
+  color: #5eead4;
+}
+
+/* Diamond */
+.rank-badge[data-rank="Diamond"],
+.rank-pill[data-rank="Diamond"] {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(99, 102, 241, 0.05));
+  border-color: rgba(99, 102, 241, 0.6);
+  color: #818cf8;
+}
+
+/* Master */
+.rank-badge[data-rank="Master"],
+.rank-pill[data-rank="Master"] {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(236, 72, 153, 0.1));
+  border-color: rgba(168, 85, 247, 0.6);
+  color: #c084fc;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LEADERBOARD TOP-3 HIGHLIGHTS
+═══════════════════════════════════════════════════════════════════════════ */
+
+.leaderboard-table tbody tr:nth-child(1) td { color: #eab308; }
+.leaderboard-table tbody tr:nth-child(2) td { color: #c0c0c8; }
+.leaderboard-table tbody tr:nth-child(3) td { color: #cd7f32; }
+
+.leaderboard-table tbody tr:nth-child(1) { background: rgba(234, 179, 8, 0.05); }
+.leaderboard-table tbody tr:nth-child(2) { background: rgba(192, 192, 200, 0.04); }
+.leaderboard-table tbody tr:nth-child(3) { background: rgba(205, 127, 50, 0.04); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ENHANCED ANIMATIONS
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* Correct answer pulse — green glow on word display */
+.word-display.correct-flash {
+  animation: correctPulse 0.5s ease;
+}
+
+@keyframes correctPulse {
+  0%   { text-shadow: none; color: var(--text-primary); }
+  30%  { text-shadow: 0 0 20px rgba(16, 185, 129, 0.8); color: #34d399; }
+  100% { text-shadow: none; color: var(--text-primary); }
+}
+
+/* Wrong answer shake — already exists as .shake, adding red tint */
+.answer-input.wrong-flash {
+  animation: shake 0.4s ease, wrongTint 0.4s ease;
+}
+
+@keyframes wrongTint {
+  0%, 100% { border-color: var(--border); }
+  50%       { border-color: rgba(239, 68, 68, 0.8); box-shadow: 0 0 12px rgba(239, 68, 68, 0.3); }
+}
+
+/* Score pop — animate score change */
+.score-value.pop {
+  animation: scorePop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes scorePop {
+  0%   { transform: scale(1); }
+  60%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+/* Match-found overlay pulse ring */
+.match-found-ring {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid var(--accent);
+  margin: 0 auto 16px;
+  position: relative;
+  animation: ringPulse 1.5s ease infinite;
+}
+
+@keyframes ringPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.6); }
+  70%  { box-shadow: 0 0 0 20px rgba(99, 102, 241, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    RESPONSIVE
 ═══════════════════════════════════════════════════════════════════════════ */
 
