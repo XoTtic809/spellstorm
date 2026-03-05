@@ -236,10 +236,9 @@ const Game = (() => {
         return;
       }
       els.mfCountdown.textContent = count;
-      // Re-trigger pop animation
       els.mfCountdown.style.animation = 'none';
-      void els.mfCountdown.offsetWidth; // reflow
-      els.mfCountdown.style.animation = '';
+      void els.mfCountdown.offsetWidth;
+      els.mfCountdown.style.animation = 'countdownPop 0.4s cubic-bezier(0.34,1.56,0.64,1) both';
     }, 1000);
 
     // Setup game screen

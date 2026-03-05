@@ -30,7 +30,7 @@ router.get('/:username', async (req, res) => {
     // Fetch last 10 ranked matches
     const matchResult = await query(
       `SELECT m.id, m.mode, m.score_p1, m.score_p2, m.rating_change, m.forfeit,
-              m.played_at, m.winner_id,
+              m.played_at, m.winner_id, m.player1_id, m.player2_id,
               u1.username AS player1, u2.username AS player2
        FROM matches m
        JOIN users u1 ON u1.id = m.player1_id
