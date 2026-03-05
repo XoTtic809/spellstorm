@@ -85,9 +85,12 @@ const Game = (() => {
     if (!token) return null;
 
     socket = io({ auth: { token }, transports: ['websocket'] });
+    window.socket = socket;  // expose for battle.js
 
     socket.on('connect', () => {
       console.log('[Game] Socket connected:', socket.id);
+      // Attach battle module socket events once connected
+      if (window.battleModule) window.battleModule.attachSocketEvents(socket);
     });
 
     socket.on('disconnect', (reason) => {

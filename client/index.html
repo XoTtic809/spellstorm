@@ -30,6 +30,10 @@
           <span class="btn-icon">🎮</span>
           Casual Mode
         </button>
+        <button class="btn btn-battle" id="btn-play-battle">
+          <span class="btn-icon">⚔️</span>
+          Battle Royale
+        </button>
         <button class="btn btn-ghost" id="btn-leaderboard">
           <span class="btn-icon">📊</span>
           Leaderboard
@@ -381,6 +385,238 @@
     </div>
   </div>
 
+  <!-- ══════════════════════════════════════════════ BATTLE MENU SCREEN -->
+  <div id="screen-battle-menu" class="screen">
+    <div class="battle-menu-container">
+      <div class="battle-menu-card glass">
+
+        <button class="btn btn-ghost btn-sm back-btn" id="battle-menu-back">← Back</button>
+
+        <div class="battle-menu-header">
+          <div class="battle-menu-icon">⚔️</div>
+          <h2>Battle Royale</h2>
+          <p class="battle-menu-sub">2–6 players · Speed spelling · Last one standing</p>
+        </div>
+
+        <!-- Sub-mode selector -->
+        <div class="battle-submode-selector">
+          <button class="submode-btn active" data-submode="party" id="submode-party">
+            <span class="submode-icon">🎉</span>
+            <span class="submode-name">Party</span>
+            <span class="submode-desc">All rounds · Highest score wins</span>
+          </button>
+          <button class="submode-btn" data-submode="elimination" id="submode-elimination">
+            <span class="submode-icon">💀</span>
+            <span class="submode-name">Elimination</span>
+            <span class="submode-desc">Lowest scorer knocked out · Last standing wins</span>
+          </button>
+        </div>
+
+        <div class="battle-menu-divider">
+          <span>Choose how to play</span>
+        </div>
+
+        <!-- Options -->
+        <div class="battle-options">
+          <button class="btn btn-primary btn-glow" id="btn-battle-auto">
+            <span class="btn-icon">🔍</span>
+            Auto Matchmaking
+            <span class="battle-queue-size hidden" id="battle-auto-queue-size"></span>
+          </button>
+
+          <button class="btn btn-secondary" id="btn-battle-create">
+            <span class="btn-icon">➕</span>
+            Create Private Lobby
+          </button>
+
+          <div class="battle-join-row">
+            <input
+              type="text"
+              id="battle-code-input"
+              class="battle-code-input"
+              placeholder="Enter code (e.g. STORM-4F)"
+              maxlength="8"
+              autocomplete="off"
+              autocapitalize="characters"
+              spellcheck="false"
+            />
+            <button class="btn btn-outline-accent" id="btn-battle-join-code">Join</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ BATTLE LOBBY SCREEN -->
+  <div id="screen-battle-lobby" class="screen">
+    <div class="battle-lobby-container">
+      <div class="battle-lobby-card glass">
+
+        <div class="battle-lobby-header">
+          <div class="lobby-code-display">
+            <span class="lobby-code-label">Room Code</span>
+            <span class="lobby-code-value" id="lobby-code-value">——</span>
+            <button class="btn btn-ghost btn-xs" id="btn-copy-code" title="Copy code">📋</button>
+          </div>
+          <div class="lobby-submode-tag" id="lobby-submode-tag">Party</div>
+        </div>
+
+        <div class="lobby-players-title">
+          Players <span id="lobby-player-count">1</span>/<span id="lobby-max-players">6</span>
+        </div>
+
+        <div class="lobby-players-list" id="lobby-players-list">
+          <!-- Populated by JS -->
+        </div>
+
+        <div class="lobby-min-hint" id="lobby-min-hint">Waiting for at least 2 players…</div>
+
+        <div class="battle-lobby-actions">
+          <button class="btn btn-primary btn-glow" id="btn-lobby-start" disabled>
+            Start Game
+          </button>
+          <button class="btn btn-ghost" id="btn-lobby-leave">Leave Lobby</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ BATTLE QUEUE SCREEN -->
+  <div id="screen-battle-queue" class="screen">
+    <div class="queue-container">
+      <div class="queue-card glass">
+        <div class="queue-header">
+          <div class="queue-mode-badge battle-badge" id="battle-queue-badge">Battle Royale</div>
+          <h2>Finding Players…</h2>
+        </div>
+
+        <div class="queue-animation">
+          <div class="radar-ring"></div>
+          <div class="radar-ring delay-1"></div>
+          <div class="radar-ring delay-2"></div>
+          <div class="radar-center">⚔️</div>
+        </div>
+
+        <div class="queue-info">
+          <div class="queue-stat">
+            <span class="queue-stat-label">Sub-mode</span>
+            <span class="queue-stat-value" id="battle-queue-submode">Party</span>
+          </div>
+          <div class="queue-stat">
+            <span class="queue-stat-label">In Queue</span>
+            <span class="queue-stat-value" id="battle-queue-size">—</span>
+          </div>
+          <div class="queue-stat">
+            <span class="queue-stat-label">Wait Time</span>
+            <span class="queue-stat-value" id="battle-queue-wait">0s</span>
+          </div>
+        </div>
+
+        <p class="battle-queue-hint">Match fires when 4+ players queue, or after 30s with ≥2</p>
+
+        <button class="btn btn-outline" id="btn-battle-queue-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ BATTLE GAME SCREEN -->
+  <div id="screen-battle" class="screen">
+
+    <!-- Match starting overlay -->
+    <div id="battle-found-overlay" class="match-found-overlay hidden">
+      <div class="match-found-content">
+        <div class="match-found-title">BATTLE ROYALE</div>
+        <div class="battle-found-players" id="battle-found-players">
+          <!-- Populated by JS -->
+        </div>
+        <div class="match-found-countdown" id="battle-found-countdown">3</div>
+      </div>
+    </div>
+
+    <div class="battle-layout">
+
+      <!-- Top bar -->
+      <div class="battle-topbar glass">
+        <div class="battle-topbar-left">
+          <span class="battle-round-info">Round <span id="battle-round">1</span>/<span id="battle-total-rounds">10</span></span>
+          <span class="battle-submode-badge" id="battle-submode-badge">Party</span>
+        </div>
+        <div class="battle-timer-wrap">
+          <svg class="battle-timer-ring" viewBox="0 0 80 80">
+            <circle class="timer-ring-bg" cx="40" cy="40" r="34" />
+            <circle class="timer-ring-fill" cx="40" cy="40" r="34" id="battle-timer-arc" />
+          </svg>
+          <div class="battle-timer-value" id="battle-timer">15</div>
+        </div>
+      </div>
+
+      <!-- Main content: word + input + players panel -->
+      <div class="battle-main">
+
+        <!-- Word area -->
+        <div class="battle-word-area">
+          <div class="difficulty-label" id="battle-word-difficulty">MEDIUM</div>
+          <div class="word-display" id="battle-word">
+            <span class="word-letter" style="animation-delay:0.0s">?</span>
+          </div>
+          <div class="battle-answer-area">
+            <div class="answer-input-wrap" id="battle-answer-wrap">
+              <input
+                type="text"
+                id="battle-answer-input"
+                class="answer-input"
+                placeholder="Type the word…"
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+                spellcheck="false"
+                maxlength="50"
+              />
+              <button class="submit-btn" id="btn-battle-submit">→</button>
+            </div>
+            <div class="answer-feedback" id="battle-answer-feedback"></div>
+          </div>
+        </div>
+
+        <!-- Live player panel -->
+        <div class="battle-players-panel glass" id="battle-players-panel">
+          <div class="battle-panel-title">Players</div>
+          <div class="battle-players-list" id="battle-players-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ BATTLE RESULTS SCREEN -->
+  <div id="screen-battle-results" class="screen">
+    <div class="results-container">
+      <div class="results-card glass">
+
+        <div class="results-header">
+          <div class="results-icon" id="battle-results-icon">🏆</div>
+          <h2 class="results-title" id="battle-results-title">—</h2>
+          <p class="results-subtitle" id="battle-results-subtitle">Battle Royale Complete</p>
+        </div>
+
+        <div class="battle-rankings" id="battle-rankings">
+          <!-- Populated by JS -->
+        </div>
+
+        <div class="results-actions">
+          <button class="btn btn-primary btn-glow" id="btn-battle-again">Play Again</button>
+          <button class="btn btn-ghost" id="btn-battle-results-home">Home</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <!-- Toast notifications -->
   <div id="toast-container" class="toast-container"></div>
 
@@ -389,6 +625,7 @@
   <script src="/js/auth.js"></script>
   <script src="/js/anticheat.js"></script>
   <script src="/js/game.js"></script>
+  <script src="/js/battle.js"></script>
   <script src="/js/main.js"></script>
 </body>
 </html>

@@ -10,13 +10,18 @@ const Main = (() => {
   // ── Screen Navigation ─────────────────────────────────────────────────────
 
   const screens = {
-    home:        document.getElementById('screen-home'),
-    auth:        document.getElementById('screen-auth'),
-    queue:       document.getElementById('screen-queue'),
-    game:        document.getElementById('screen-game'),
-    results:     document.getElementById('screen-results'),
-    leaderboard: document.getElementById('screen-leaderboard'),
-    profile:     document.getElementById('screen-profile'),
+    home:            document.getElementById('screen-home'),
+    auth:            document.getElementById('screen-auth'),
+    queue:           document.getElementById('screen-queue'),
+    game:            document.getElementById('screen-game'),
+    results:         document.getElementById('screen-results'),
+    leaderboard:     document.getElementById('screen-leaderboard'),
+    profile:         document.getElementById('screen-profile'),
+    'battle-menu':   document.getElementById('screen-battle-menu'),
+    'battle-lobby':  document.getElementById('screen-battle-lobby'),
+    'battle-queue':  document.getElementById('screen-battle-queue'),
+    'battle':        document.getElementById('screen-battle'),
+    'battle-results': document.getElementById('screen-battle-results'),
   };
 
   let currentScreen = 'home';
@@ -105,6 +110,7 @@ const Main = (() => {
 
     try {
       await Auth.login(username, password);
+      window.currentUser = Auth.getUser();
       updateHomeScreen();
       showScreen('home');
       showToast('Welcome back, ' + username + '!', 'success');
@@ -143,6 +149,7 @@ const Main = (() => {
 
     try {
       await Auth.register(username, password);
+      window.currentUser = Auth.getUser();
       updateHomeScreen();
       showScreen('home');
       showToast('Account created! Welcome, ' + username + '!', 'success');
@@ -177,6 +184,14 @@ const Main = (() => {
     Game.joinQueue('casual');
   });
 
+  document.getElementById('btn-play-battle').addEventListener('click', () => {
+    if (!Auth.isLoggedIn()) {
+      showScreen('auth');
+      return;
+    }
+    showScreen('battle-menu');
+  });
+
   document.getElementById('btn-login').addEventListener('click', () => {
     document.querySelectorAll('.auth-tab')[0].click();
     showScreen('auth');
@@ -190,6 +205,8 @@ const Main = (() => {
   document.getElementById('btn-logout').addEventListener('click', () => {
     Auth.logout();
     Game.disconnect();
+    window.currentUser = null;
+    window.socket      = null;
     updateHomeScreen();
     showToast('Logged out', 'info');
   });
@@ -362,14 +379,22 @@ const Main = (() => {
     // Restore session
     if (Auth.loadSession()) {
       updateHomeScreen();
+      window.currentUser = Auth.getUser();
       // Reconnect socket silently
       Game.connect();
     }
+
+    // Init battle module
+    if (window.battleModule) window.battleModule.init();
 
     showScreen('home');
   }
 
   init();
+
+  // Expose globals for cross-module use (battle.js, game.js callbacks)
+  window.showScreen = showScreen;
+  window.showToast  = showToast;
 
   return { showScreen, showToast, updateHomeScreen };
 
