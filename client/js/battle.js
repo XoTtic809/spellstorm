@@ -10,18 +10,18 @@
 
   // ── State ──────────────────────────────────────────────────────────────────
 
-  let battleRoomId      = null;
-  let battleRoundId     = null;
-  let battleSubMode     = 'party'; // 'party' | 'elimination'
-  let battleRound       = 0;
-  let battleTotalRounds = 10;
-  let battleMySocketId  = null;
+  let battleRoomId       = null;
+  let battleRoundId      = null;
+  let battleSubMode      = 'party'; // 'party' | 'elimination'
+  let battleRound        = 0;
+  let battleTotalRounds  = 10;
+  let battleMySocketId   = null;
   let battleHasSubmitted = false;
-  let battleTimerRAF    = null;
-  let battleTimerStart  = null;
-  let battleTimerMs     = 15000;
-  let battleQueueStart  = null;
-  let battleQueueTimer  = null;
+  let battleTimerRAF     = null;
+  let battleTimerStart   = null;
+  let battleTimerMs      = 15000;
+  let battleQueueStart   = null;
+  let battleQueueTimer   = null;
 
   // Selected sub-mode on the menu screen
   let selectedSubMode = 'party';
@@ -64,16 +64,18 @@
       if (e.key === 'Enter') $('btn-battle-join-code')?.click();
     });
 
-    $('battle-menu-back')?.addEventListener('click', () => showScreen('screen-home'));
+    // FIX: was 'screen-home'
+    $('battle-menu-back')?.addEventListener('click', () => showScreen('home'));
 
     // Lobby actions
     $('btn-lobby-start')?.addEventListener('click', () => {
       getSocket().emit('battle:start');
     });
 
+    // FIX: was 'screen-battle-menu'
     $('btn-lobby-leave')?.addEventListener('click', () => {
       getSocket().emit('battle:leave');
-      showScreen('screen-battle-menu');
+      showScreen('battle-menu');
     });
 
     $('btn-copy-code')?.addEventListener('click', () => {
@@ -83,11 +85,11 @@
       }
     });
 
-    // Battle queue cancel
+    // Battle queue cancel — FIX: was 'screen-battle-menu'
     $('btn-battle-queue-cancel')?.addEventListener('click', () => {
       getSocket().emit('battle:queue:leave');
       clearInterval(battleQueueTimer);
-      showScreen('screen-battle-menu');
+      showScreen('battle-menu');
     });
 
     // Battle game submit
@@ -96,11 +98,9 @@
       if (e.key === 'Enter') submitBattleAnswer();
     });
 
-    // Battle results actions
-    $('btn-battle-again')?.addEventListener('click', () => showScreen('screen-battle-menu'));
-    $('btn-battle-results-home')?.addEventListener('click', () => showScreen('screen-home'));
-
-    // Wire socket events (socket may not exist yet — deferred in attachSocketEvents)
+    // Battle results actions — FIX: were 'screen-battle-menu' / 'screen-home'
+    $('btn-battle-again')?.addEventListener('click', () => showScreen('battle-menu'));
+    $('btn-battle-results-home')?.addEventListener('click', () => showScreen('home'));
   }
 
   function attachSocketEvents(socket) {
@@ -108,24 +108,26 @@
 
     // ── Lobby events ────────────────────────────────────────────────────────
 
+    // FIX: was 'screen-battle-lobby'
     socket.on('battle:lobby:created', ({ code, lobby }) => {
       renderLobby(lobby, code, true);
-      showScreen('screen-battle-lobby');
+      showScreen('battle-lobby');
     });
 
     socket.on('battle:lobby:joined', ({ code, lobby }) => {
       renderLobby(lobby, code, false);
-      showScreen('screen-battle-lobby');
+      showScreen('battle-lobby');  // FIX: was 'screen-battle-lobby'
     });
 
     socket.on('battle:lobby:update', ({ lobby }) => {
-      const code = lobby.code;
+      const code   = lobby.code;
       const isHost = lobby.hostSocketId === socket.id;
       renderLobby(lobby, code, isHost);
     });
 
+    // FIX: was 'screen-battle-menu'
     socket.on('battle:lobby:left', () => {
-      showScreen('screen-battle-menu');
+      showScreen('battle-menu');
     });
 
     // ── Queue events ────────────────────────────────────────────────────────
@@ -144,7 +146,7 @@
         if (el) el.textContent = `${secs}s`;
       }, 1000);
 
-      showScreen('screen-battle-queue');
+      showScreen('battle-queue');  // FIX: was 'screen-battle-queue'
     });
 
     socket.on('battle:queue:left', () => {
@@ -196,7 +198,7 @@
             clearInterval(tick);
             overlay.classList.add('hidden');
             setupBattleScreen(players, subMode);
-            showScreen('screen-battle');
+            showScreen('battle');  // FIX: was 'screen-battle'
           }
         }, 1000);
       }
@@ -208,10 +210,12 @@
       battleTotalRounds  = totalRounds;
       battleHasSubmitted = false;
 
-      $('battle-round').textContent        = round;
-      $('battle-total-rounds').textContent = totalRounds;
+      $('battle-round').textContent           = round;
+      $('battle-total-rounds').textContent    = totalRounds;
       $('battle-word-difficulty').textContent = difficulty.toUpperCase();
-      $('battle-answer-feedback').textContent = '';
+
+      const feedback = $('battle-answer-feedback');
+      if (feedback) { feedback.textContent = ''; feedback.style.color = ''; }
 
       // Animate word
       renderBattleWord(word);
@@ -229,6 +233,24 @@
       startBattleTimer(timerMs);
     });
 
+    // FIX: 'answer:wrong' from the server goes to the battle UI when in battle mode.
+    // game.js also has an answer:wrong handler but it targets the 1v1 elements (which
+    // are invisible during battle), so having both listeners is safe.
+    socket.on('answer:wrong', () => {
+      if (!battleRoomId) return; // only act if we are in a battle
+
+      const feedback = $('battle-answer-feedback');
+      if (feedback) {
+        feedback.textContent = '✗ Incorrect';
+        feedback.style.color = 'var(--danger)';
+      }
+      const input = $('battle-answer-input');
+      if (input) {
+        input.classList.add('shake');
+        setTimeout(() => input.classList.remove('shake'), 400);
+      }
+    });
+
     socket.on('battle:answer:result', ({ socketId, correct, pointsEarned, rank, scores }) => {
       renderBattlePlayers(scores);
 
@@ -240,12 +262,10 @@
             feedback.style.color = 'var(--success)';
           }
           const wrap = $('battle-answer-wrap');
-          if (wrap) wrap.classList.add('correct-flash');
-          setTimeout(() => wrap?.classList.remove('correct-flash'), 600);
-        } else {
-          if (feedback) { feedback.textContent = 'Wrong answer, try again!'; feedback.style.color = 'var(--danger)'; }
-          const input = $('battle-answer-input');
-          if (input) { input.classList.add('shake'); setTimeout(() => input.classList.remove('shake'), 400); }
+          if (wrap) {
+            wrap.classList.add('correct');
+            setTimeout(() => wrap.classList.remove('correct'), 600);
+          }
         }
       }
     });
@@ -264,7 +284,7 @@
         feedback.style.color = 'var(--text-secondary)';
       }
 
-      // Mark eliminatedIds in player list
+      // Mark eliminated players in the list
       renderBattlePlayers(scores, eliminatedIds);
 
       if (eliminatedIds.length > 0) {
@@ -275,6 +295,7 @@
       }
     });
 
+    // FIX: showBattleResults internally called showScreen('screen-battle-results')
     socket.on('battle:end', ({ rankings, subMode }) => {
       stopBattleTimer();
       showBattleResults(rankings, subMode);
@@ -289,10 +310,10 @@
       battleHasSubmitted = false;
 
       setupBattleScreen(data.scores, data.subMode);
-      showScreen('screen-battle');
+      showScreen('battle');  // FIX: was 'screen-battle'
 
-      $('battle-round').textContent        = data.round;
-      $('battle-total-rounds').textContent = data.totalRounds;
+      $('battle-round').textContent           = data.round;
+      $('battle-total-rounds').textContent    = data.totalRounds;
       $('battle-word-difficulty').textContent = (data.difficulty || '').toUpperCase();
       renderBattleWord(data.word || '?');
       renderBattlePlayers(data.scores || []);
@@ -330,7 +351,7 @@
     if (!answer) return;
 
     battleHasSubmitted = true;
-    input.disabled     = true;
+    if (input) input.disabled = true;
     const btn = $('btn-battle-submit');
     if (btn) btn.disabled = true;
 
@@ -362,11 +383,11 @@
     if (!list) return;
 
     list.innerHTML = scores.map((p, i) => {
-      const isMe       = p.socketId === battleMySocketId;
-      const isElim     = p.eliminated;
-      const isNewElim  = newlyEliminatedIds.includes(p.socketId);
+      const isMe      = p.socketId === battleMySocketId;
+      const isElim    = p.eliminated;
+      const isNewElim = newlyEliminatedIds.includes(p.socketId);
       const statusIcon = isElim ? '💀' : p.roundCorrect ? '✓' : '⏳';
-      const rankNum    = i + 1;
+      const rankNum   = i + 1;
 
       return `<div class="battle-player-row ${isMe ? 'is-me' : ''} ${isElim ? 'eliminated' : ''} ${isNewElim ? 'just-eliminated' : ''}">
         <span class="bpr-rank">${rankNum}</span>
@@ -402,7 +423,7 @@
 
     const startBtn = $('btn-lobby-start');
     if (startBtn) {
-      startBtn.disabled = !isHost || lobby.players.length < 2;
+      startBtn.disabled    = !isHost || lobby.players.length < 2;
       startBtn.textContent = isHost ? 'Start Game' : 'Waiting for host…';
     }
 
@@ -415,24 +436,23 @@
   }
 
   function showBattleResults(rankings, subMode) {
-    const winner = rankings.find(r => r.isWinner);
-    const me     = rankings.find(r => r.socketId === battleMySocketId);
+    const me = rankings.find(r => r.socketId === battleMySocketId);
 
-    const icon = $('battle-results-icon');
+    const icon  = $('battle-results-icon');
     const title = $('battle-results-title');
-    const sub = $('battle-results-subtitle');
+    const sub   = $('battle-results-subtitle');
 
     if (me?.isWinner) {
-      if (icon) icon.textContent = '🏆';
+      if (icon)  icon.textContent  = '🏆';
       if (title) title.textContent = 'You Won!';
     } else if (me?.rank === 2) {
-      if (icon) icon.textContent = '🥈';
+      if (icon)  icon.textContent  = '🥈';
       if (title) title.textContent = '2nd Place!';
     } else if (me?.rank === 3) {
-      if (icon) icon.textContent = '🥉';
+      if (icon)  icon.textContent  = '🥉';
       if (title) title.textContent = '3rd Place!';
     } else {
-      if (icon) icon.textContent = '💀';
+      if (icon)  icon.textContent  = '💀';
       if (title) title.textContent = me?.eliminated ? 'Eliminated!' : `${ordinal(me?.rank || 0)} Place`;
     }
 
@@ -449,7 +469,7 @@
       `).join('');
     }
 
-    showScreen('screen-battle-results');
+    showScreen('battle-results');  // FIX: was 'screen-battle-results'
   }
 
   // ── Visual timer ──────────────────────────────────────────────────────────
@@ -469,7 +489,7 @@
     }
 
     function tick(now) {
-      const elapsed  = now - battleTimerStart;
+      const elapsed   = now - battleTimerStart;
       const remaining = Math.max(0, ms - elapsed);
       const frac      = remaining / ms;
 
@@ -505,7 +525,7 @@
   function requireAuth() {
     if (!window.currentUser) {
       showToast('Please login to play Battle Royale.', 'error');
-      showScreen('screen-auth');
+      showScreen('auth');
       return false;
     }
     return true;
